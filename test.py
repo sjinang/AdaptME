@@ -10,17 +10,16 @@ import numpy as np
 # import joblib
 # from tensorflow.keras.models import model_from_json
 # from config import data_mir
-import tensorflow as tf
+# import tensorflow as tf
 
-def rpa(y_true,y_pred):
-    a = tf.abs(y_true-y_pred) < 0.5
-    a = tf.cast(a,dtype=tf.float32)
-    return tf.reduce_mean(a)
-t = tf.constant(6)
-t1 = tf.constant([1.,2.,3.,4.,5.])
-t2 = tf.constant([1.6,2.2,2.9,4.4,4.51])
-# print(tf.make_ndarray(rpa(t1,t2)))
-with tf.Session() as sess:  print(rpa(t1,t2).eval()) 
+import gc
+n = 1000000
+list_bar = []
+for i in range(n):
+    list_bar.append([1.1542]*1024)
+    print(i,end="\r")
+    if i % 50000 == 0:
+        gc.collect()
 
 
 

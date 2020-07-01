@@ -14,13 +14,11 @@ from config import data_mir
 import time
 import datetime
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
 ########################################################################
 ########################################################################
 
-X = np.load('data_X.npy')
-Y = np.load('data_Y.npy')
+X = np.load('data/data_X.npy')
+Y = np.load('data/data_Y.npy')
 print(X.shape)
 
 ind = np.where(Y > 1)
@@ -35,11 +33,11 @@ def preprocessing_X(X_train,X_test):
     scaler = Normalizer().fit(X_train)
     X_train = scaler.transform(X_train)
     X_test = scaler.transform(X_test)
-    joblib.dump(scaler, 'normalizer.pkl') 
+    joblib.dump(scaler, 'saved_models/normalizer.pkl') 
 
     scaler1 = StandardScaler()
     scaler1.fit(X_train)
-    joblib.dump(scaler1, 'standardscaler.pkl') 
+    joblib.dump(scaler1, 'saved_models/standardscaler.pkl') 
 
     X_train = scaler1.transform(X_train)
     X_test = scaler1.transform(X_test)
@@ -55,25 +53,25 @@ def transform_X(X):
 
 def fitting(model, X_train, Y_train, epochs=25, batch_size=128,const=data_mir.const):
     data_mir.log+=datetime.datetime.now().strftime("%d-%m %H-%M")
-    tb = TensorBoard(log_dir='logs/'+(data_mir.log))
+    tb = tf.keras.callbacks.TensorBoard(log_dir='logs/'+(data_mir.log))
     
     history = model.fit(X_train,
                         Y_train/const,
                         epochs=epochs,
                         batch_size=batch_size,
                         verbose=1,
-                        # validation_split=0.1,
+                        # validation_split=0.05,
                         callbacks=[tb])
-    model.save("model_mir.h5")
+    model.save("saved_models/model_mir.h5")
 
 def evaluation(model,X_test,Y_test,const=data_mir.const):
     Y_pred = ((model.predict(X_test))[:,0])*const
 
-    F_test = 440*(np.power(2,(Y_test-69)/12))
-    F_pred = 440*(np.power(2,(Y_pred-69)/12))
+    M_test = (12*np.log2(Y_test/440)) +69
+    M_pred = (12*np.log2(Y_pred/440)) +69
 
-    RPA = (abs(Y_pred - Y_test) <= 0.5).sum() / (Y_test.shape[0]/100)   
-    RFA = ( (abs(F_test-F_pred)/F_test) <= 0.05 ).sum() / (Y_test.shape[0]/100)   
+    RPA = (abs(M_pred - M_test) <= 0.5).sum() / (M_test.shape[0]/100)   
+    RFA = ( (abs(Y_test-Y_pred)/Y_test) <= 0.05 ).sum() / (Y_test.shape[0]/100)   
     # print("accuracy :",RPA,RFA)
 
     return [RPA,RFA], Y_pred

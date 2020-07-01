@@ -43,8 +43,8 @@ def generate_data_single(name,sr=16000,Hs=0.02,Ws=0.04,N_fft=2048):
 
 
 def transform_X(X):
-    norm = joblib.load('normalizer.pkl')
-    std = joblib.load('standardscaler.pkl')
+    norm = joblib.load('saved_models/normalizer.pkl')
+    std = joblib.load('saved_models/standardscaler.pkl')
     X = norm.transform(X)
     X = std.transform(X)
     return X
@@ -57,7 +57,7 @@ def addn_fitting(model,X_train,Y_train,epochs=2,batch_size=128,const=data_mir.co
                         batch_size=batch_size,
                         verbose=1)
     
-    model.save("model_mir_addn.h5")
+    model.save("saved_models/model_mir_addn.h5")
     return model
 
    
@@ -76,8 +76,8 @@ new_RPAs = []
 for name in Name:
 
     X, Y = generate_data_single(name,Ws=0.12)
-    # X = np.load('data_X.npy')
-    # Y = np.load('data_Y.npy')
+    # X = np.load('data/data_X.npy')
+    # Y = np.load('data/data_Y.npy')
 
     ind = np.where(Y > 1)
     Y = Y[ind]
@@ -85,7 +85,7 @@ for name in Name:
 
     #print('*** X.shape :',X.shape)
 
-    model = load_model('model_mir.h5')
+    model = load_model('saved_models/model_mir.h5')
 
     X = transform_X(X)
     rpa, Y_pred = evaluation(model,X,Y)

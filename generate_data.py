@@ -4,6 +4,7 @@ import librosa
 import os, glob
 import librosa.display
 from config import data_mir
+import gc
 
 # path1 = './Orchset/audio/mono'
 # path2 = './Orchset/GT'
@@ -75,9 +76,9 @@ def generate_data_or(Hs=0.01, Ws=0.05, N_fft=2048):
         Y = np.append(Y,pitch_vals)
 
     
-    np.save('data_X.npy',X)
-    np.save('data_Y.npy',Y)
-    np.save('data_SR.npy',np.array([SR]))
+    np.save('data/data_X.npy',X)
+    np.save('data/data_Y.npy',Y)
+    np.save('data/data_SR.npy',np.array([SR]))
     
     return X, Y, SR
 
@@ -109,29 +110,29 @@ def generate_data_mir(SR=data_mir.SR,Hs=data_mir.Hs, Ws=data_mir.Ws, N_fft=data_
         else:
             X = np.append(X,(temp.T)[:minm],axis=0)
         
-        Y = np.append(Y,pitch_vals[:minm])
+        Y = np.append(Y,pitch_vals[:minm][:,1])
         
         count+=1
         print(" * X & Y {} done...".format(count),end="\r")
 
-    
-    np.save('data_X.npy',X)
-    np.save('data_Y.npy',Y)
-    np.save('data_SR.npy',np.array([SR]))
-    
     print("X.shape :", X.shape, "Y.shape :", Y.shape)
+    
+    np.save('data/data_X.npy',X)
+    np.save('data/data_Y.npy',Y)
+    np.save('data/data_SR.npy',np.array([SR]))
+    
+    
 
 
 
-def generate_data_mir1(SR=data_mir.SR,Hs=data_mir.Hs, Ws=data_mir.Ws, N_fft=data_mir.N_fft):
+def generate_data_mir_list(SR=data_mir.SR,Hs=data_mir.Hs, Ws=data_mir.Ws, N_fft=data_mir.N_fft):
     
     X = []
     Y = []
-    x = []
-    y = []
     SR = SR
     count = 0
     print(SR,Hs,Ws,N_fft)
+
     for f_path1,f_path2 in zip(sorted(glob.glob(os.path.join(path3, '*.wav'))), sorted(glob.glob(os.path.join(path4, '*.pv')))):
     
         wav, sr = librosa.core.load(f_path1,sr=SR)
@@ -147,24 +148,18 @@ def generate_data_mir1(SR=data_mir.SR,Hs=data_mir.Hs, Ws=data_mir.Ws, N_fft=data
 
         minm = min(temp.shape[1],pitch_vals.shape[0])
 
-        if count%10==0:
-            X.extend(x)
-            Y.extend(y)
-            x = ((temp.T)[:minm]).tolist()
-            y = (pitch_vals[:minm]).tolist()
-        else:
-            x.extend(((temp.T)[:minm]).tolist())
-            y.extend((pitch_vals[:minm]).tolist())
+        X.extend(((temp.T)[:minm]).tolist())
+        Y.extend((pitch_vals[:minm]).tolist())
         
         count+=1
         print(" * X & Y {} done...".format(count),end="\r")
 
-    X.extend(x)
-    Y.extend(y)
+        if count % 10 == 0:
+            gc.collect()
     
-    np.save('data_X.npy',np.array(X))
-    np.save('data_Y.npy',np.array(Y))
-    np.save('data_SR.npy',np.array([SR]))
+    np.save('data/data_X.npy',np.array(X))
+    np.save('data/data_Y.npy',np.array(Y))
+    np.save('data/data_SR.npy',np.array([SR]))
     
     print("X.shape :", X.shape, "Y.shape :", Y.shape)
 
