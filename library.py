@@ -1,17 +1,4 @@
-import numpy as np
-import sklearn.decomposition
-import tensorflow.keras as keras
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout
-import matplotlib.pyplot as plt
-from tensorflow.keras.callbacks import TensorBoard
-import pickle 
-import dill
-import tensorflow as tf
-import joblib
-from config import data_mir
-from tensorflow.keras.regularizers import l1,l2
-# import tensorflow.keras.backend as K
+from import_libs import *
 
 ########################################################################
 ########################################################################
@@ -29,15 +16,27 @@ def NN_regressor():
     model = Sequential()
 
     # model.add(Dropout(0, input_shape=(1025,)))
-    n=256; data_mir.log=str(n); model.add(Dense(n, activation='tanh',input_dim=1025,
-                                                kernel_regularizer=l1(0.0005)
+    model.add(Input((1025,)))
+    model.add(Dropout(0.2))
+    n=256; data_mir.log=str(n); model.add(Dense(n
+                                                , activation='relu'
+            
+                                                # , kernel_regularizer=l1(0.0005)
                                                 )) # ^softsign,tanh
-    n=256; data_mir.log+='x'+str(n); model.add(Dense(n, activation='tanh'))
-    n=256; data_mir.log+='x'+str(n); model.add(Dense(n, activation='tanh'))
+    
+    n=256; data_mir.log+='x'+str(n); model.add(Dense(n, activation='relu'))
+    model.add(Dropout(0.2))
+    n=256; data_mir.log+='x'+str(n); model.add(Dense(n, activation='relu'))
+    model.add(Dropout(0.2))
     # n=256; data_mir.log+='x'+str(n); model.add(Dense(n, activation='tanh'))
     # n=500; data_mir.log+='x'+str(n); model.add(Dense(n, activation='tanh',kernel_regularizer=keras.regularizers.l1()))
+    
     model.add(Dense(1, activation='relu'))
-    model.compile(loss='mean_absolute_error', optimizer='adam', metrics=['mae',RPA]) 
+    
+    model.compile(loss='mean_absolute_error'
+                , optimizer='adam'
+                , metrics=['mae',RPA]
+                ) 
 
     return model
     

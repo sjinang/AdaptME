@@ -1,5 +1,4 @@
 
-
 class data_mir():
 
 	Hs = 0.01
