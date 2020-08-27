@@ -33,7 +33,7 @@ def main():
         
         model = NN_regressor()
         
-        n=100; b=512
+        n=1000; b=512
         data_mir.log+='_'+str(n)+'_'+str(b)+'_'
         fitting(model, X_train, Y_train, epochs=n, batch_size=b)
         
