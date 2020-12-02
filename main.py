@@ -1,16 +1,21 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+
 from library import *
-
+# os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 ########################################################################
 ########################################################################
 
-X = np.load('data/data_X.npy')
-Y = np.load('data/data_Y.npy')
+X = np.load('data/data_X_1.npy')[:,:512]
+Y = np.load('data/data_Y_1.npy')
 print(X.shape)
-
-ind = np.where(Y > 1)
-Y = Y[ind]
-X = X[ind]
-print(X.shape)
+print(Y[:10])
+# print(Y[:20])
+# ind = np.where(Y > 1)
+# Y = Y[ind]
+# X = X[ind]
+# print(X.shape)
 ########################################################################
 ########################################################################
 
@@ -29,27 +34,27 @@ def main():
         X_train, X_test = X[train_index], X[test_index]
         Y_train, Y_test = Y[train_index], Y[test_index]
 
-        X_train, X_test = preprocessing_X(X_train, X_test)
+        # X_train, X_test = preprocessing_X(X_train, X_test)
         
-        model = NN_regressor()
+        # model = NN_regressor_dsne(512)
         
-        n=1000; b=512
-        data_mir.log+='_'+str(n)+'_'+str(b)+'_'
-        fitting(model, X_train, Y_train, epochs=n, batch_size=b)
+        # n=100; b=512
+        # data_mir.log+='_'+str(n)+'_'+str(b)+'_'
+        # fitting(model, X_train, Y_train, epochs=n, batch_size=b)
         
-        # X_test = transform_X(X_test)
-        # X_train = transform_X(X_train)
-        # model = load_model('saved_models/model_mir.h5', custom_objects={'RPA': RPA})
+        X_test = transform_X(X_test)
+        X_train = transform_X(X_train)
+        model = load_model('saved_models/model_mir_for_dsne.h5', custom_objects={'RPA': RPA})
 
         ra_test, Y_pred_test = evaluation(model,X_test,Y_test)
-        ra_train,Y_pred_train = evaluation(model,X_train,Y_train)
+        ra_train, Y_pred_train = evaluation(model,X_train,Y_train)
         
-        print(ra_train)
-        print(ra_test)
+        print(ra_train, ra_test)
+        # print(ra_test)
         print()
-        accuracy.append([ra_test,ra_train])
+        # accuracy.append([ra_test,ra_train])
 
-        break
+        # break
 
     # print(accuracy)
 

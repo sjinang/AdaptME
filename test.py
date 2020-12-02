@@ -1,91 +1,38 @@
-import numpy as np 
-# import matplotlib.pyplot as plt
-# import librosa
-# from library import *
-# import os, glob
-# import librosa.display
-# from sklearn.preprocessing import StandardScaler,normalize
-# from config import data_mir
-# from tensorflow.keras.models import load_model
-# import joblib
-# from tensorflow.keras.models import model_from_json
-# from config import data_mir
-# import tensorflow as tf
-
-import gc
-n = 1000000
-list_bar = []
-for i in range(n):
-    list_bar.append([1.1542]*1024)
-    print(i,end="\r")
-    if i % 50000 == 0:
-        gc.collect()
+from import_libs import *
 
 
+def generate_data_single(name='daisy1',SR=data_mir.SR,Hs=data_mir.Hs,Ws=data_mir.Ws,N_fft=data_mir.N_fft):
 
+    f_path1 = 'mir-1k/Wavfile/abjones_1_01'+'.wav'
+    f_path2 = 'mir-1k/PitchLabel/abjones_1_01'+'.pv'
 
+    wav, sr = librosa.core.load(f_path1,sr=SR)
+    HOP_len = int(sr * 10 * 1e-3)
+    WIN_len = HOP_len*25
 
-
-
-# path3 = './mir-1k/Wavfile'
-# path4 = './mir-1k/PitchLabel'
-# def generate_data_single(name,sr=data_mir.SR,Hs=data_mir.Hs,Ws=data_mir.Ws,N_fft=data_mir.N_fft):
-
-#     f_path1 = os.path.join(path3,name+'.wav')
-#     f_path2 = os.path.join(path4,name+'.pv')
-
-#     wav, sr = librosa.core.load(f_path1,sr=sr)
-#     HOP_len = int(sr * Hs)
-#     WIN_len = int(sr * Ws)
-
-#     temp = np.abs(librosa.core.stft(wav,hop_length=HOP_len,win_length=WIN_len,n_fft=N_fft))
-#     # e = pow(10,-2)
-#     # temp = 20*np.log10(temp+e)
-#     temp = librosa.core.amplitude_to_db(temp,ref=np.mean)
-
-#     pitch_vals = np.loadtxt(f_path2)
-
-#     minm = min(temp.shape[1],pitch_vals.shape[0])
+    temp = np.abs(librosa.core.stft(wav,hop_length=HOP_len,win_length=WIN_len,n_fft=4096))
     
-#     X = (temp.T)[:minm]
-#     Y = pitch_vals[:minm]
+    data = np.loadtxt(f_path2)
 
-#     return X,Y
+    plt.figure(1)
+    plt.plot(data[:,0],data[:,1],'go',markersize=0.1)
+    b = librosa.display.specshow(librosa.core.amplitude_to_db(temp,ref=np.max),y_axis='hz', x_axis='s',sr=sr,hop_length=HOP_len)
+    plt.title('Power spectrogram')
+    plt.colorbar(format='%+2.0f dB')
+    plt.tight_layout()
+    plt.show()
 
-# def transform_X(X):
-#     norm = joblib.load('normalizer.pkl')
-#     std = joblib.load('standardscaler.pkl')
-#     X = norm.transform(X)
-#     X = std.transform(X)
-#     return X
+    # Y = np.loadtxt(p_path)
+    # plt.figure(2)
+    # plt.plot(np.arange(0,Y.shape[0]*0.02,0.02),Y,'o',markersize=3)
+    # #plt.yscale('log')
+    # plt.show()
 
-# def evaluation(model,X_test,Y_test,const=data_mir.const):
-#     Y_pred = ((model.predict(X_test))[:,0])*const 
-#     RPA = (abs(Y_pred - Y_test) <= 0.5).sum() / (Y_test.shape[0]/100)   
-
-#     return RPA, Y_pred
+generate_data_single()
 
 
-# f_path = './mir-1k/Wavfile/abjones_1_04.wav'
-# p_path = './mir-1k/PitchLabel/abjones_1_01.pv'
-# name = 'amy_2_04'
-# ###################################################################
 
-# X, Y = generate_data_single(name)
 
-# ind = np.where(Y > 1)
-# Y = Y[ind]
-# X = X[ind]
-
-# model = load_model('model_mir.h5')
-
-# X = transform_X(X)
-# rpa, Y_pred = evaluation(model,X,Y)
-# print('****************************************',rpa)
-
-# plt.plot(np.arange(Y.shape[0]),Y,'g')
-# plt.plot(np.arange(Y.shape[0]),Y_pred,'y')
-# plt.show()
 
 
 

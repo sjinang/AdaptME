@@ -481,7 +481,6 @@ fdps_5_06
 fdps_5_07
 fdps_5_08
 fdps_5_09
-filenames.txt
 geniusturtle_1_01
 geniusturtle_1_02
 geniusturtle_1_03
@@ -836,7 +835,6 @@ leon_9_03
 leon_9_04
 leon_9_05
 leon_9_06
-Only_filenames.txt
 stool_1_01
 stool_1_02
 stool_1_03
@@ -935,7 +933,6 @@ titon_5_06
 titon_5_07
 titon_5_08
 titon_5_09
-Wavfilenames.txt
 yifen_1_01
 yifen_1_02
 yifen_1_03

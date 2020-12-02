@@ -2,18 +2,36 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard
-from tensorflow.keras.layers import Dense, Dropout, Input
+from tensorflow.keras.layers import Dense, Dropout, Input, BatchNormalization
 from tensorflow.keras.models import Sequential, load_model
 from sklearn import metrics
 import sklearn.decomposition
-from sklearn.preprocessing import StandardScaler,Normalizer
+from sklearn.preprocessing import StandardScaler,Normalizer, MinMaxScaler
 from sklearn.model_selection import KFold
-import librosa, librosa.display
+import librosa, librosa.display, gc
 import pickle, dill, joblib, os, time, datetime
 from tensorflow.keras.regularizers import l1,l2
-from tensorflow.keras import Input,Model
+from tensorflow.keras import Model
 from config import data_mir
+from sklearn.metrics import accuracy_score
 
+def freq2midi(f):
+    return 69 + 12*np.log2(f/440)
+
+
+def midi2freq(m):
+    return 2**((m - 69)/ 12) * 440
+
+
+def RPA(y_true,y_pred):
+    y_true = ((12*tf.math.log(y_true/440)) / tf.math.log( tf.constant(2,dtype=tf.float32) )) + 69
+    y_pred = ((12*tf.math.log(y_pred/440)) / tf.math.log( tf.constant(2,dtype=tf.float32) )) + 69
+    # a = tf.abs(y_true-y_pred) < 0.5
+    # a = tf.cast(a,dtype=tf.float32)
+    # return 100*tf.reduce_mean(a)
+    y_true = tf.math.round(y_true)
+    y_pred = tf.math.round(y_pred)
+    return tf.reduce_mean(tf.cast(y_true==y_pred,dtype=tf.float32))
 
 
 def preprocessing_X(X_train,X_test):
@@ -49,21 +67,29 @@ def fitting(model, X_train, Y_train, epochs=25, batch_size=512,const=data_mir.co
                         Y_train/const,
                         epochs=epochs,
                         batch_size=batch_size,
-                        verbose=1
-                        # , validation_split=0.05
+                        verbose=2
+                        , validation_split=0.1
                         # , callbacks=[tb]
                         )
-    model.save("saved_models/model_mir.h5")
+    model.save("saved_models/model_mir_for_dsne.h5")
 
 
 def evaluation(model,X_test,Y_test,const=data_mir.const):
-    Y_pred = ((model.predict(X_test))[:,0])*const
+    Y_pred = (model(X_test,training=False)[:,0])*const
 
-    M_test = (12*np.log2(Y_test/440)) + 69
-    M_pred = (12*np.log2(Y_pred/440)) + 69
+    M_test = freq2midi(Y_test)
+    M_pred = freq2midi(Y_pred)
 
-    RPA = (abs(M_pred - M_test) <= 0.5).sum() / (M_test.shape[0]/100)   
-    RFA = ( (abs(Y_test-Y_pred)/Y_test) <= 0.05 ).sum() / (Y_test.shape[0]/100)   
-    # print("accuracy :",RPA,RFA)
+    M_pred = M_pred.round()
+    M_true = M_test.round()
+    return accuracy_score(M_true,M_pred), Y_pred
 
-    return [RPA,RFA], Y_pred
+def evaluation_dsne(model,X_test,Y_test,const=data_mir.const):
+    Y_pred = (model(X_test,training=False)[0][:,0])*const
+
+    M_test = freq2midi(Y_test)
+    M_pred = freq2midi(Y_pred)
+
+    M_pred = M_pred.round()
+    M_true = M_test.round()
+    return accuracy_score(M_true,M_pred), Y_pred

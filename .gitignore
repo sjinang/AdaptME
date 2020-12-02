@@ -1,5 +1,7 @@
 __pycache__/
 logs/
 data/
-
-
+.vscode/
+vd/
+mir-1k/
+mirex05/
