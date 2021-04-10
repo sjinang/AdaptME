@@ -8,10 +8,10 @@ import gc
 from utils import freq2midi
 # path1 = './Orchset/audio/mono'
 # path2 = './Orchset/GT'
-# path3 = 'mir-1k/Wavfile'
-# path4 = 'mir-1k/PitchLabel'
-path3 = 'mirex05/'
-path4 = 'mirex05/'
+path3 = 'mir-1k/Wavfile'
+path4 = 'mir-1k/PitchLabel'
+# path3 = 'mirex05/'
+# path4 = 'mirex05/'
 
 def generate_data_single(name,SR=data_mir.SR,Hs=data_mir.Hs,Ws=data_mir.Ws,N_fft=data_mir.N_fft):
 
@@ -58,22 +58,22 @@ def generate_data_mir(SR=data_mir.SR,Hs=data_mir.Hs, Ws=data_mir.Ws, N_fft=data_
     
         minm = min(temp.shape[1],pitch_vals.shape[0])
         mina.append(minm)
-        # if count==0:
-        #     X = (temp.T)[:minm]
-        # else:
-        #     X = np.append(X,(temp.T)[:minm],axis=0)
+        if count==0:
+            X = (temp.T)[:minm]
+        else:
+            X = np.append(X,(temp.T)[:minm],axis=0)
         
-        # Y = np.append(Y,pitch_vals[:minm][:,1])
+        Y = np.append(Y,pitch_vals[:minm][:,1])
         
         count+=1
-        # print(" * X & Y {} done...".format(count),end="\r")
-        print(count,f_path1)
+        print(" * X & Y {} done...".format(count),end="\r")
+        # print(count,f_path1)
     np.savetxt('data/framespersong.txt',np.array(mina))
-    # print("X.shape :", X.shape, "Y.shape :", Y.shape)
+    print("X.shape :", X.shape, "Y.shape :", Y.shape)
     
-    # np.save('data/8k/data_X.npy',X)
-    # np.save('data/8k/data_Y.npy',Y)
-    # np.save('data/8k/data_SR.npy',np.array([SR]))
+    np.save('data/data_X.npy',X)
+    np.save('data/data_Y.npy',Y)
+    np.save('data/data_SR.npy',np.array([SR]))
     
     
 def generate_data_mir_shift(SR=data_mir.SR,Hs=data_mir.Hs, Ws=data_mir.Ws, N_fft=data_mir.N_fft):
@@ -116,7 +116,7 @@ def generate_data_mir_shift(SR=data_mir.SR,Hs=data_mir.Hs, Ws=data_mir.Ws, N_fft
     np.save('data/data_Y_6s.npy',Y)
 
 
-# generate_data_mir_shift()
+generate_data_mir()
 
 
 # X = np.load('data/data_X_1.npy')
@@ -146,25 +146,25 @@ def generate_data_mir_shift(SR=data_mir.SR,Hs=data_mir.Hs, Ws=data_mir.Ws, N_fft
 # plt.show()
 
 ############################################
-from library import *
+# from library import *
 
 
-names = np.loadtxt('mirex05/filenames.txt',dtype=str)
-# model = load_model('saved_models/model_mir_for_dsne.h5',custom_objects={'RPA':RPA})
-# print(names[:10])
-model = NN_regressor_dsne(512)
-model.load_weights('saved_models/model_mir_for_dsne_weights.h5')
-# names=['train02']
-for name in names:
-    X,Y,temp = generate_data_single(name)
-    X = X[Y>1]
-    Y = Y[Y>1]
+# names = np.loadtxt('mirex05/filenames.txt',dtype=str)
+# # model = load_model('saved_models/model_mir_for_dsne.h5',custom_objects={'RPA':RPA})
+# # print(names[:10])
+# model = NN_regressor_dsne(512)
+# model.load_weights('saved_models/model_mir_for_dsne_weights.h5')
+# # names=['train02']
+# for name in names:
+#     X,Y,temp = generate_data_single(name)
+#     X = X[Y>1]
+#     Y = Y[Y>1]
 
-    # ind = np.array([2093,2127,2052,647,714,741,641,548,558,756,31,37,143,49,1241,301])
+#     # ind = np.array([2093,2127,2052,647,714,741,641,548,558,756,31,37,143,49,1241,301])
 
-    X = transform_X(X[:,:512])
-    rpa,pred = evaluation_dsne(model,X,Y)
-    print(name,rpa)
+#     X = transform_X(X[:,:512])
+#     rpa,pred = evaluation_dsne(model,X,Y)
+#     print(name,rpa)
 
     # print(name,rpa)
     # plt.plot(np.arange(pred.shape[0]),pred,'o-',markersize=4)

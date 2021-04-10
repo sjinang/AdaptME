@@ -71,7 +71,7 @@ def fitting(model, X_train, Y_train, epochs=25, batch_size=512,const=data_mir.co
                         , validation_split=0.1
                         # , callbacks=[tb]
                         )
-    model.save("saved_models/model_mir_for_dsne.h5")
+    model.save("saved_models/model_mir1k.h5")
 
 
 def evaluation(model,X_test,Y_test,const=data_mir.const):
