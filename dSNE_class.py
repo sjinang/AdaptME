@@ -8,6 +8,9 @@ def seed_all(seed=2020):
     np.random.seed(seed)
     tf.random.set_seed(seed)
 seed_all()
+
+minm = 33
+maxm = 90
 #########################################################
 #########################################################
 # ind = np.array([2093,2127,2052,647,714,741,641,548,558,756,31,37,143,49,1241,301])
@@ -36,22 +39,27 @@ def generate_data_single(name,SR=data_mir.SR,Hs=data_mir.Hs,Ws=data_mir.Ws,N_fft
 
 #########################################################
 #########################################################
-n_tar = 16
 
 target_X,target_Y = generate_data_single('train02')
 target_X = target_X[target_Y>1]
 target_Y = target_Y[target_Y>1]
-target_X = transform_X(target_X[:,:512])
+target_X = transform_X_class(target_X[:,:512])
 
-model = NN_regressor_dsne(512)
-model.load_weights('saved_models/model_mir_for_dsne_weights.h5')
+target_Y1 = freq2midi(target_Y).round() - minm
 
-orig_rpa,_ = evaluation_dsne(model,target_X,target_Y)
+model = NN_classifier_dsne(512)
+model.load_weights('saved_models/model_class_mir_dsne_weights.h5')
+
+Y1_pred_c = np.argmax(model.predict(target_X)[0], axis=-1)
+orig_rpa = accuracy_score(target_Y,Y1_pred_c)
+
+
+n_tar = 16
 
 ind = np.arange(target_X.shape[0])
 np.random.shuffle(ind)
 x_tar = tf.convert_to_tensor(np.take(target_X,ind[:n_tar],0))
-y_tar = tf.convert_to_tensor(np.take(target_Y,ind[:n_tar],0))
+y1_tar = tf.convert_to_tensor(np.take(target_Y1,ind[:n_tar],0))
 ###################################################################
 # pred_X = model(target_X,training=False)[0][:,0]
 # error = abs(pred_X-target_Y)
@@ -98,8 +106,8 @@ y_tar = tf.convert_to_tensor(np.take(target_Y,ind[:n_tar],0))
 # for c in range(n_class):
 #     obj[i] = np.argwhere(np.round(freq2midi(y_src))==c)[0]
 
-tar = tf.data.Dataset.from_tensor_slices((x_tar, y_tar))
-tar = tar.shuffle(y_tar.shape[0]+1, reshuffle_each_iteration=True)
+tar = tf.data.Dataset.from_tensor_slices((x_tar, y1_tar))
+tar = tar.shuffle(y1_tar.shape[0]+1, reshuffle_each_iteration=True)
 
 # def hausdorffian_distance(xt,y,feat_src,y_src):
 #     y_src = y_src.numpy()
@@ -117,7 +125,7 @@ tar = tar.shuffle(y_tar.shape[0]+1, reshuffle_each_iteration=True)
 def hausdorffian_distance(xt,y,feat_src,y_src):
     y_src = y_src.numpy()
     y = y.numpy()
-    ind_y = np.argwhere(np.round(freq2midi(y_src))==np.round(freq2midi(y)))[0]
+    ind_y = np.argwhere(y_src==y)[0]
     all_ind = np.arange(feat_src.shape[0])
     ind_not_y = np.setxor1d(all_ind, ind_y)
 
@@ -132,9 +140,12 @@ def hausdorffian_distance(xt,y,feat_src,y_src):
 
 ind_1 = np.arange(100)
 opt = tf.keras.optimizers.Adam(0.0005)
-loss_mse = tf.keras.losses.MeanAbsoluteError()
+loss = tf.keras.losses.SparseCategoricalCrossentropy()
 
-epochs = 20; alpha=0.1; beta=1.0
+
+
+
+epochs = 10; alpha=0.1; beta=1.0
 acc = []
 for epoch in range(epochs):
     # tar = tar.shuffle(len_tar+1)
@@ -146,14 +157,14 @@ for epoch in range(epochs):
     for tar_x,tar_y in tar:
         for src_ind in ind_1[:10]:
             x_src = tf.convert_to_tensor(np.load('data/dsne/src/src_X_t_{}.npy'.format(src_ind)))
-            y_src = tf.convert_to_tensor(np.load('data/dsne/src/src_Y_{}.npy'.format(src_ind)))
+            y_src = freq2midi(tf.convert_to_tensor(np.load('data/dsne/src/src_Y_{}.npy'.format(src_ind)))).round() - minm
 
             with tf.GradientTape() as tape:
                 out_src = model(x_src,training=True)
                 out_tar = model(x_tar,training=True)
                 out_tar_sample = model(tf.reshape(tar_x,[1,tar_x.shape[0]]),training=True)
                 
-                loss_mse_tot = loss_mse(y_src,out_src[0]) + beta*loss_mse(y_tar,out_tar[0])
+                loss_mse_tot = loss(y_src,out_src[0]) + beta*loss(y1_tar,out_tar[0])
                 loss_value= (
                             (1-alpha)*loss_mse_tot
                             + alpha*hausdorffian_distance(out_tar_sample[1],tar_y,out_src[1],y_src)

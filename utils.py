@@ -24,6 +24,8 @@ def midi2freq(m):
 
 
 def RPA(y_true,y_pred):
+    # y_true[y_true<1] = 1.0
+    # y_pred[y_pred<1] = 1.0
     y_true = ((12*tf.math.log(y_true/440)) / tf.math.log( tf.constant(2,dtype=tf.float32) )) + 69
     y_pred = ((12*tf.math.log(y_pred/440)) / tf.math.log( tf.constant(2,dtype=tf.float32) )) + 69
     # a = tf.abs(y_true-y_pred) < 0.5
@@ -58,6 +60,13 @@ def transform_X(X):
     X = std.transform(X)
     return X
 
+def transform_X_class(X):
+    norm = joblib.load('saved_models/normalizer_class.pkl')
+    std = joblib.load('saved_models/standardscaler_class.pkl')
+    X = norm.transform(X)
+    X = std.transform(X)
+    return X
+
 
 def fitting(model, X_train, Y_train, epochs=25, batch_size=512,const=data_mir.const):
     # data_mir.log+=datetime.datetime.now().strftime("%d-%m %H-%M")
@@ -67,11 +76,11 @@ def fitting(model, X_train, Y_train, epochs=25, batch_size=512,const=data_mir.co
                         Y_train/const,
                         epochs=epochs,
                         batch_size=batch_size,
-                        verbose=2
+                        verbose=1
                         , validation_split=0.1
                         # , callbacks=[tb]
                         )
-    model.save("saved_models/model_mir1k.h5")
+    model.save("saved_models/model_mir_for_b.h5")
 
 
 def evaluation(model,X_test,Y_test,const=data_mir.const):
@@ -90,6 +99,28 @@ def evaluation_dsne(model,X_test,Y_test,const=data_mir.const):
     M_test = freq2midi(Y_test)
     M_pred = freq2midi(Y_pred)
 
-    M_pred = M_pred.round()
-    M_true = M_test.round()
-    return accuracy_score(M_true,M_pred), Y_pred
+    # M_pred = M_pred.round()
+    # M_true = M_test.round()
+    
+    score = (abs(M_test-M_pred)<0.5).sum()/M_test.shape[0]
+
+    return score, Y_pred
+
+def evaluation_b(model,X_test,Y_test,const=data_mir.const):
+    Y_pred = (model(X_test,training=False)[:,0]).numpy()
+    # print(type(Y_pred))
+    Y_pred_t = Y_pred.copy()
+    Y_pred_t[Y_pred_t < 1] = 1
+    Y_test_t = Y_test.copy()
+    Y_test_t[Y_test_t < 1] = 1
+
+    M_test = freq2midi(Y_test_t)
+    M_pred = freq2midi(Y_pred_t)
+
+    score = (abs(M_test-M_pred)<0.5).sum()/M_test.shape[0]
+
+    # M_pred = M_pred.round()
+    # M_true = M_test.round()
+    # return accuracy_score(M_true,M_pred), Y_pred
+    return score, Y_pred
+    # return 1,2
